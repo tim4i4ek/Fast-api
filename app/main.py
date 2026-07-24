@@ -59,7 +59,7 @@ def get_post(id: int,db = Depends(get_db)):
 
 
 @app.get("/posts/{id}")
-def get_post(id: int)
+def get_post(id: int):
     cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))
     post = cursor.fetchone()
     return {"data": post}
