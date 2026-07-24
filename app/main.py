@@ -39,7 +39,6 @@ class Post(BaseModel):
     rating: Optional[int] = None
 
 
-
 @app.get("/posts")
 def get_posts():
     cursor.execute("""SELECT * FROM posts""")
@@ -54,11 +53,20 @@ def test_posts(db: Session = Depends(get_db)):
     return {"data": posts}
 
 
+@app.get("/posts/{id}")
+def get_post(id: int,db = Depends(get_db)):
+    db.query(models.Post).filter(models.Post.id == id).update({"published": False})
+
+
+@app.get("/posts/{id}")
+def get_post(id: int)
+    cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))
+    post = cursor.fetchone()
+    return {"data": post}
+
+
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
 def create_post(post: Post, db: Session = Depends(get_db)):
-    #cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""" ,
-                  # (post.title, post.content, post.published))
-   # new_post = cursor.fetchone()
     new_post = models.Post(title=post.title, content=post.content)
     db.add(new_post)
     db.commit()
@@ -66,13 +74,22 @@ def create_post(post: Post, db: Session = Depends(get_db)):
     return {"data": new_post}
 
 
+@app.post("posts", status_code=status.HTTP_201_CREATED)
+def create_post(post: Post):
+    cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s), 
+                   RETURNING *""", (post.title, post.content, post.published))
+    new_post = cursor.fetchone()
+    conn.commit()
+    return {"data": new_post}
 
-@app.get("/posts/{id}")
-def get_post(id: int,db = Depends(get_db)):
-    #ursor.execute("""SELECT * FROM posts WHERE id = %s """, (str(id)))
-    #post = cursor.fetchone()
-    db.query(models.Post).filter(models.Post.id == id).update({"published": False})
 
+@app.put("/posts/{id}")
+def update_post(id: int, post: Post):
+    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""" ,
+                   (post.title, post.content, post.published, str(id)))
+    updated_post = cursor.fetchone()
+    conn.commit()
+    return {"data": updated_post}
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -84,13 +101,7 @@ def delete_post(id: int):
 
 
 
-@app.put("/posts/{id}")
-def update_post(id: int, post: Post):
-    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""" ,
-                   (post.title, post.content, post.published, str(id)))
-    updated_post = cursor.fetchone()
-    conn.commit()
-    return {"data": updated_post}
+
 
 
 
