@@ -4,6 +4,9 @@ from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
+
+from sqlalchemy.testing import db
+
 from . import models
 from .database import engine, SessionLocal
 from sqlalchemy.orm import Session
@@ -52,19 +55,23 @@ def test_posts(db: Session = Depends(get_db)):
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: Post):
-    cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""" ,
-                   (post.title, post.content, post.published))
-    new_post = cursor.fetchone()
+def create_post(post: Post, db: Session = Depends(get_db)):
+    #cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""" ,
+                  # (post.title, post.content, post.published))
+   # new_post = cursor.fetchone()
+    new_post = models.Post(title=post.title, content=post.content)
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
     return {"data": new_post}
 
 
 
 @app.get("/posts/{id}")
-def get_post(id: int, response: Response):
-    cursor.execute("""SELECT * FROM posts WHERE id = %s """, (str(id)))
-    post = cursor.fetchone()
-    return {"post_detail": post}
+def get_post(id: int,db = Depends(get_db)):
+    #ursor.execute("""SELECT * FROM posts WHERE id = %s """, (str(id)))
+    #post = cursor.fetchone()
+    db.query(models.Post).filter(models.Post.id == id).update({"published": False})
 
 
 
