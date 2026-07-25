@@ -95,7 +95,11 @@ def delete_post(id: int):
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(id: int,db: Session = Depends(get_db)):
-    db.query(models.Post).filter(models.Post.id == id).delete()
+
+    post = db.query(models.Post).filter(models.Post.id == id).delete()
+    if post.first() == None:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    post.delete(synchronize_session=False)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
