@@ -1,22 +1,18 @@
-__pycache__/
-*.py[cod]
-*$py.class
+# Виртуальное окружение
 venv/
-env/
+.venv/
 
-
-
+# Файлы с секретами
 .env
-static/
-media/
+app/.env
 
+# Кэш Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
+# Системные файлы macOS и настройки IDE (PyCharm / VS Code)
 .DS_Store
-.AppleDouble
-.LSOverride
-
-.vscode/
 .idea/
-
-
-*.log
+.vscode/
