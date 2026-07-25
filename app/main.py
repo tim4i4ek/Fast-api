@@ -32,13 +32,6 @@ while True:
         time.sleep(1)
 
 
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
-    rating: Optional[int] = None
-
-
 @app.get("/posts")
 def get_posts():
     cursor.execute("""SELECT * FROM posts""")
