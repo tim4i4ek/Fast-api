@@ -100,6 +100,16 @@ def delete_post(id: int):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_post(id: int,db: Session = Depends(get_db)):
+    db.query(models.Post).filter(models.Post.id == id).delete()
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+
+
+
 
 
 
