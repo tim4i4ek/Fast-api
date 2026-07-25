@@ -5,6 +5,7 @@ import time
 from .database import SessionLocal
 from sqlalchemy.orm import Session
 from . import models,schemas
+import os
 app = FastAPI()
 
 def get_db():
@@ -16,8 +17,11 @@ def get_db():
 
 while True:
     try:
-        conn = psycopg2.connect(host='localhost', database='postgres', user='tim4i4ek',
-                                password='tim4i4ek121209', cursor_factory=RealDictCursor)
+        conn = psycopg2.connect(host=os.getenv('HOST').format(),
+                                database=os.getenv('DATABASE').format(),
+                                user=os.getenv('PASSWORD').format(),
+                                password=os.getenv('PASSWORD').format(),
+                                cursor_factory=RealDictCursor)
         cursor = conn.cursor()
         print("Connected to PostgreSQL")
         break
@@ -53,7 +57,7 @@ def get_post(id: int):
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: schemas.Post, db: Session = Depends(get_db)):
+def create_post(post: schemas.CreatePost, db: Session = Depends(get_db)):
     new_post = models.Post(title=post.title, content=post.content)
     db.add(new_post)
     db.commit()
@@ -62,7 +66,7 @@ def create_post(post: schemas.Post, db: Session = Depends(get_db)):
 
 
 @app.post("posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: schemas.Post):
+def create_post(post: schemas.CreatePost):
     cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s), 
                    RETURNING *""", (post.title, post.content, post.published))
     new_post = cursor.fetchone()
@@ -71,7 +75,7 @@ def create_post(post: schemas.Post):
 
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: schemas.Post):
+def update_post(id: int, post: schemas.CreatePost):
     cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""" ,
                    (post.title, post.content, post.published, str(id)))
     updated_post = cursor.fetchone()
