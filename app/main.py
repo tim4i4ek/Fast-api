@@ -46,41 +46,41 @@ def test_posts(db: Session = Depends(get_db)):
 
 @app.get("/posts/{id}")
 def get_post(id: int,db = Depends(get_db)):
-    db.query(models.Post).filter(models.Post.id == id).update({"published": False})
-
+    post = db.query(models.Post).filter(models.Post.id == id).update({"published": False})
+    return post
 
 @app.get("/posts/{id}")
 def get_post(id: int):
     cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))
     post = cursor.fetchone()
-    return {"data": post}
+    return post
 
 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
+@app.post("/posts", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_post(post: schemas.CreatePost, db: Session = Depends(get_db)):
     new_post = models.Post(title=post.title, content=post.content)
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
-    return {"data": new_post}
+    return new_post
 
 
 @app.post("posts", status_code=status.HTTP_201_CREATED)
-def create_post(post: schemas.CreatePost):
+def create_post(post: schemas.CreatePost,):
     cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s), 
                    RETURNING *""", (post.title, post.content, post.published))
     new_post = cursor.fetchone()
     conn.commit()
-    return {"data": new_post}
+    return new_post
 
 
 @app.put("/posts/{id}")
-def update_post(id: int, post: schemas.CreatePost):
+def update_post(id: int, post: schemas.CreatePost,):
     cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""" ,
                    (post.title, post.content, post.published, str(id)))
     updated_post = cursor.fetchone()
     conn.commit()
-    return {"data": updated_post}
+    return updated_post
 
 
 @app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -91,14 +91,6 @@ def delete_post(id: int):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id: int,db: Session = Depends(get_db)):
-
-    post = db.query(models.Post).filter(models.Post.id == id).delete()
-    if post.first() == None:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
-    post.delete(synchronize_session=False)
-    db.commit()
 
 
 
