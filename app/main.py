@@ -6,6 +6,7 @@ from .database import SessionLocal
 from sqlalchemy.orm import Session
 from . import models,schemas
 import os
+from typing import List
 app = FastAPI()
 
 def get_db():
@@ -44,7 +45,7 @@ def test_posts(db: Session = Depends(get_db)):
     return {"data": posts}
 
 
-@app.get("/posts/{id}")
+@app.get("/posts/{id}",response_model=schemas.Post)
 def get_post(id: int,db = Depends(get_db)):
     post = db.query(models.Post).filter(models.Post.id == id).update({"published": False})
     return post
@@ -74,6 +75,15 @@ def create_post(post: schemas.CreatePost,):
     return new_post
 
 
+@app.put("/posts/{id}",response_model=List[schemas.Post])
+def update_post(id: int, post: schemas.PostBase, db: Session = Depends(get_db)):
+    updated_post = db.query(models.Post).filter(models.Post.id == id).first()
+    updated_post = models.Post(title=post.title, content=post.content, published=updated_post.published)
+    db.commit()
+    db.refresh(updated_post)
+    return updated_post
+
+
 @app.put("/posts/{id}")
 def update_post(id: int, post: schemas.CreatePost,):
     cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""" ,
@@ -90,6 +100,13 @@ def delete_post(id: int):
     conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
+
+@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOutput)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    new_user = models.User(email=user.email, password=user.password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
 
 
 
