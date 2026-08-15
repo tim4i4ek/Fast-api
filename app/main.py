@@ -1,12 +1,17 @@
+from http.client import HTTPException
 from fastapi import FastAPI, Response, status, Depends
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
+from passlib.context import CryptContext
 from .database import SessionLocal
 from sqlalchemy.orm import Session
-from . import models,schemas
+from . import models,schemas,utils
 import os
 from typing import List
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 app = FastAPI()
 
 def get_db():
@@ -103,10 +108,23 @@ def delete_post(id: int):
 
 @app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOutput)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    new_user = models.User(email=user.email, password=user.password)
+    hashed_password = utils.hash(user.password)
+    user.password = hashed_password
+    new_user = models.User(**user.dict())
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    return new_user
+
+@app.get("/users/{id}",response_model=schemas.UserOutput)
+def get_user(id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == id).fetchone()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+
+
 
 
 
