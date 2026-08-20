@@ -5,7 +5,7 @@ import time
 from passlib.context import CryptContext
 from .database import SessionLocal
 import os
-from .routers import posts, users
+from .routers import posts, users, auth
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI()
@@ -34,6 +34,7 @@ while True:
 
 app.include_router(users.router)
 app.include_router(posts.router)
+app.include_router(auth.router)
 
 
 
