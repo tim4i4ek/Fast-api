@@ -6,6 +6,8 @@ from passlib.context import CryptContext
 from .database import SessionLocal
 import os
 from .routers import posts, users, auth
+
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI()
