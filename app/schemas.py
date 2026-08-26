@@ -1,7 +1,26 @@
-from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
-from click import Option
+from pydantic import BaseModel, ConfigDict, EmailStr
+
+
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserOutput(BaseModel):
+    id: int
+    email: EmailStr
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
 
 
 class PostBase(BaseModel):
@@ -9,36 +28,25 @@ class PostBase(BaseModel):
     content: str
     published: bool = True
 
+
 class CreatePost(PostBase):
     pass
+
 
 class Post(PostBase):
     id: int
     created_at: datetime
+    owner_id: int
+    owner: UserOutput
 
-class Config:
-    orm_mode = True
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-
-class UserOutput(BaseModel):
-    id = int
-    email: EmailStr
-    created_at: datetime
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
-    id = Optional[str] = None
+    id: Optional[str] = None

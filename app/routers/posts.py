@@ -17,13 +17,13 @@ def get_posts(db: Session = Depends(get_db)):
     return posts
 
 
-@router.get("/{id}", response_model=schemas.Post)
-def get_post(id: int, db: Session = Depends(get_db)):
-    post = db.query(models.Post).filter(models.Post.id == id).first()
+@router.get("/{post_id}", response_model=schemas.Post)
+def get_post(post_id: int, db: Session = Depends(get_db)):
+    post = db.query(models.Post).filter(models.Post.id == post_id).first()
     if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Post with id: {id} was not found"
+            detail=f"Post with id: {post_id} was not found"
         )
     return post
 
@@ -32,32 +32,38 @@ def get_post(id: int, db: Session = Depends(get_db)):
 def create_post(
     post: schemas.CreatePost,
     db: Session = Depends(get_db),
-    current_user: int = Depends(oauth2.get_current_user)
+    current_user: schemas.TokenData = Depends(oauth2.get_current_user)
 ):
 
-    new_post = models.Post(**post.model_dump())
+    new_post = models.Post(owner_id=current_user.id, **post.model_dump())
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
     return new_post
 
 
-@router.put("/{id}", response_model=schemas.Post)
+@router.put("/{post_id}", response_model=schemas.Post)
 def update_post(
-    id: int,
+    post_id: int,
     updated_post: schemas.CreatePost,
     db: Session = Depends(get_db),
-    current_user: int = Depends(oauth2.get_current_user)
+    current_user: schemas.TokenData = Depends(oauth2.get_current_user)
 ):
-    post_query = db.query(models.Post).filter(models.Post.id == id)
+    post_query = db.query(models.Post).filter(models.Post.id == post_id)
     post = post_query.first()
 
     if post is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Post with id: {id} was not found"
+            detail=f"Post with id: {post_id} was not found"
         )
 
+
+    if str(post.owner_id) != str(current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to perform requested action"
+        )
 
     post_query.update(updated_post.model_dump(), synchronize_session=False)
     db.commit()
