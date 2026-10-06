@@ -6,7 +6,10 @@ from passlib.context import CryptContext
 from .database import SessionLocal
 import os
 from .routers import posts, users, auth
+from app import models
+from app.database import engine
 
+models.Base.metadata.create_all(bind=engine)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
